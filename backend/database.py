@@ -3,12 +3,13 @@ database.py — MongoDB connection using Motor (async)
 """
 
 import os
+import certifi 
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
 load_dotenv()
 
-MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+MONGO_URL = os.getenv("MONGO_URL")
 DB_NAME   = os.getenv("DB_NAME",   "brewdesk")
 
 client = None
@@ -22,7 +23,7 @@ async def connect_db():
             MONGO_URL,
             serverSelectionTimeoutMS=5000,
             tls=True,
-            tlsAllowInvalidCertificates=True  # fixes SSL handshake error
+            tlsCAFile=certifi.where()  # fixes SSL handshake error
         )
         await client.admin.command("ping")
         db = client[DB_NAME]
