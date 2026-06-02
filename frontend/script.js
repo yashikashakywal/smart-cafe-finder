@@ -6,7 +6,7 @@
 'use strict';
 
 // ── Config ────────────────────────────────────────────────
-const API = 'http://localhost:8000';
+const API = 'https://smart-cafe-finder.onrender.com';
 const OVERPASS = 'https://overpass-api.de/api/interpreter';
 const NOMINATIM = 'https://nominatim.openstreetmap.org';
 
