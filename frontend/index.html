@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Cafe Finder — Work. Study. Thrive.</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- SIDEBAR NAV -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">☕</span>
+    <span class="logo-text">BrewDesk</span>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-btn active" data-page="home" onclick="showPage('home')">
+      <span class="nav-icon">🗺️</span><span>Discover</span>
+    </button>
+    <button class="nav-btn" data-page="favorites" onclick="showPage('favorites')">
+      <span class="nav-icon">🔖</span><span>Saved</span>
+    </button>
+    <button class="nav-btn" data-page="reviews" onclick="showPage('reviews')">
+      <span class="nav-icon">✍️</span><span>Reviews</span>
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="location-status" id="locationStatus">
+      <span class="dot"></span> Detecting location…
+    </div>
+  </div>
+</aside>
+
+<!-- MOBILE TOP BAR -->
+<header class="mobile-header">
+  <button class="hamburger" id="hamburger" onclick="toggleSidebar()">☰</button>
+  <span class="mobile-logo">☕ BrewDesk</span>
+  <button class="mobile-locate" onclick="locateUser()">📍</button>
+</header>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+  <!-- ===== HOME PAGE ===== -->
+  <section class="page active" id="page-home">
+    <div class="page-header">
+      <h1>Find Your <em>Perfect</em> Work Cafe</h1>
+      <p>Discover cafes scored for WiFi, quiet, seating & power — not just coffee.</p>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="search-controls">
+      <div class="search-bar-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search by name or area…" oninput="filterCafes()" />
+        <button class="locate-btn" onclick="locateUser()">📍 Near Me</button>
+      </div>
+
+      <div class="filter-chips">
+        <label class="chip"><input type="checkbox" value="wifi" onchange="filterCafes()"><span>📶 WiFi</span></label>
+        <label class="chip"><input type="checkbox" value="charging" onchange="filterCafes()"><span>🔌 Charging</span></label>
+        <label class="chip"><input type="checkbox" value="quiet" onchange="filterCafes()"><span>🤫 Quiet</span></label>
+        <label class="chip"><input type="checkbox" value="budget" onchange="filterCafes()"><span>💸 Budget</span></label>
+        <label class="chip"><input type="checkbox" value="study" onchange="filterCafes()"><span>📚 Study</span></label>
+        <label class="chip"><input type="checkbox" value="coding" onchange="filterCafes()"><span>💻 Coding</span></label>
+      </div>
+
+      <div class="radius-wrap">
+        <label>Search radius: <strong id="radiusVal">1000</strong> m</label>
+        <input type="range" id="radiusSlider" min="300" max="5000" step="100" value="1000" oninput="updateRadius(this.value)" />
+      </div>
+    </div>
+
+    <!-- Split layout -->
+    <div class="split-view">
+      <!-- List Panel -->
+      <div class="cafe-list-panel">
+        <div class="panel-head">
+          <span id="cafeCount">0 cafes found</span>
+          <div class="sort-wrap">
+            <select id="sortSelect" onchange="sortCafes()">
+              <option value="score">Top Score</option>
+              <option value="distance">Nearest</option>
+              <option value="rating">Ratings</option>
+            </select>
+          </div>
+        </div>
+        <div class="cafe-list" id="cafeList">
+          <div class="empty-state">
+            <div class="empty-icon">☕</div>
+            <p>Click <strong>Near Me</strong> to discover cafes around you.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map Panel -->
+      <div class="map-panel">
+        <div id="map"></div>
+        <div class="map-legend">
+          <span class="legend-item"><span class="legend-dot green"></span>Score 80+</span>
+          <span class="legend-item"><span class="legend-dot yellow"></span>Score 60–79</span>
+          <span class="legend-item"><span class="legend-dot red"></span>Score &lt;60</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CAFE DETAIL MODAL ===== -->
+  <div class="modal-overlay" id="cafeModal" onclick="closeModal(event)">
+    <div class="modal-card" id="modalCard">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- ===== FAVORITES PAGE ===== -->
+  <section class="page" id="page-favorites">
+    <div class="page-header">
+      <h1>Your <em>Saved</em> Cafes</h1>
+      <p>Quick access to places you love working from.</p>
+    </div>
+    <div class="cafe-list full-list" id="favoritesList">
+      <div class="empty-state">
+        <div class="empty-icon">🔖</div>
+        <p>No saved cafes yet. Discover cafes and hit the bookmark icon!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== REVIEWS PAGE ===== -->
+  <section class="page" id="page-reviews">
+    <div class="page-header">
+      <h1>Community <em>Reviews</em></h1>
+      <p>Share your experience & help others find the perfect spot.</p>
+    </div>
+
+    <div class="review-form-card">
+      <h2>Write a Review</h2>
+      <div class="form-group">
+        <label>Cafe Name</label>
+        <input type="text" id="reviewCafeName" placeholder="Which cafe?" />
+      </div>
+      <div class="form-group">
+        <label>Your Rating</label>
+        <div class="star-picker" id="starPicker">
+          <span class="star" data-v="1" onclick="setRating(1)">★</span>
+          <span class="star" data-v="2" onclick="setRating(2)">★</span>
+          <span class="star" data-v="3" onclick="setRating(3)">★</span>
+          <span class="star" data-v="4" onclick="setRating(4)">★</span>
+          <span class="star" data-v="5" onclick="setRating(5)">★</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Your Review</label>
+        <textarea id="reviewText" rows="4" placeholder="WiFi speed, noise level, seating, vibe…"></textarea>
+      </div>
+      <button class="btn-primary" onclick="submitReview()">Submit Review</button>
+    </div>
+
+    <div class="reviews-list" id="allReviews"></div>
+  </section>
+
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
