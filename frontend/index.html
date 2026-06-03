@@ -55,9 +55,14 @@
     <!-- Search & Filters -->
     <div class="search-controls">
       <div class="search-bar-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Search by name or area…" oninput="filterCafes()" />
+        <span class="search-icon">🏙️</span>
+        <input type="text" id="cityInput" placeholder="Search cafes in a city… e.g. Jaipur, Mumbai" onkeydown="if(event.key==='Enter') searchByCity()" />
+        <button class="locate-btn city-search-btn" onclick="searchByCity()">🔍 Search City</button>
         <button class="locate-btn" onclick="locateUser()">📍 Near Me</button>
+      </div>
+      <div class="search-bar-wrap name-filter-wrap">
+        <span class="search-icon">☕</span>
+        <input type="text" id="searchInput" placeholder="Filter loaded cafes by name or area…" oninput="filterCafes()" />
       </div>
 
       <div class="filter-chips">
