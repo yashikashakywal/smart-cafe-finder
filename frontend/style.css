@@ -276,12 +276,6 @@ body {
 .locate-btn:hover  { background: var(--accent2); }
 .locate-btn:active { transform: scale(.97); }
 
-.city-search-btn { background: var(--accent2); }
-.city-search-btn:hover { background: var(--accent); }
-
-.name-filter-wrap { margin-top: 8px; }
-.name-filter-wrap .search-icon { opacity: 0.4; }
-
 /* Filter chips */
 .filter-chips {
   display: flex;
