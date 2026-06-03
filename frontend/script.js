@@ -173,6 +173,94 @@ async function fetchNearbyCafes() {
   }
 }
 
+// ─────────────────────────────────────────────────────────
+// CITY SEARCH
+// ─────────────────────────────────────────────────────────
+async function searchByCity() {
+  const cityInput = document.getElementById('cityInput');
+  const cityName = cityInput.value.trim();
+  if (!cityName) { toast('⚠️ Please enter a city name'); return; }
+
+  showListLoading();
+  setLocationStatus(`Searching in "${cityName}"…`, 'pulse');
+
+  // Step 1: Geocode the city using Nominatim
+  try {
+    const geoRes = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1`,
+      { headers: { 'Accept-Language': 'en' } }
+    );
+    const geoData = await geoRes.json();
+
+    if (!geoData || geoData.length === 0) {
+      toast(`❌ City "${cityName}" not found. Try a different spelling.`);
+      setLocationStatus('City not found', 'error');
+      hideListLoading();
+      return;
+    }
+
+    const cityLat = parseFloat(geoData[0].lat);
+    const cityLng = parseFloat(geoData[0].lon);
+    const displayName = geoData[0].display_name.split(',').slice(0, 2).join(',');
+
+    // Update map to city location
+    panMap(cityLat, cityLng, 13);
+    setLocationStatus(`Showing cafes in ${displayName} ✓`, 'active');
+
+    // Step 2: Fetch cafes from Overpass for the city area (5km radius)
+    const radius = 5000;
+    const overpassQuery = `
+      [out:json][timeout:30];
+      (
+        node["amenity"="cafe"](around:${radius},${cityLat},${cityLng});
+        way["amenity"="cafe"](around:${radius},${cityLat},${cityLng});
+      );
+      out body center;
+    `;
+
+    const ovRes = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: `data=${encodeURIComponent(overpassQuery)}`
+    });
+    const ovData = await ovRes.json();
+    const elements = ovData.elements || [];
+
+    if (elements.length === 0) {
+      toast(`☕ No cafes found in ${displayName}. Try a larger city or check spelling.`);
+      setLocationStatus(`No cafes found in ${displayName}`, 'error');
+      hideListLoading();
+      return;
+    }
+
+    // Temporarily set userLat/Lng for distance calculation
+    const prevLat = userLat, prevLng = userLng;
+    userLat = cityLat; userLng = cityLng;
+
+    allCafes = enrichCafes(elements);
+    applyFiltersAndRender();
+    toast(`✅ Found ${allCafes.length} cafes in ${displayName}`);
+
+    // Add a city center marker
+    if (window.L && window.map) {
+      L.marker([cityLat, cityLng], {
+        icon: L.divIcon({ className: '', html: '<div style="background:#6366f1;color:#fff;padding:4px 8px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.3)">📍 ' + displayName + '</div>', iconAnchor: [0, 0] })
+      }).addTo(window.map);
+    }
+  } catch (e) {
+    console.error(e);
+    toast('⚠️ Network error. Check your connection and try again.');
+    setLocationStatus('Search failed', 'error');
+    hideListLoading();
+  }
+}
+
+function hideListLoading() {
+  const list = document.getElementById('cafeList');
+  if (list) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">☕</div><p>No results to show.</p></div>`;
+  }
+}
+
 function enrichCafes(elements) {
   return elements.map((el, i) => {
     const lat = el.lat ?? el.center?.lat;
