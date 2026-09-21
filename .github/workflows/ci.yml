@@ -27,5 +27,5 @@ jobs:
 
       - name: Test GitHub Secret
         env:
-        TEST_SECRET: ${{ secrets.TEST_SECRET }}
+          TEST_SECRET: ${{ secrets.TEST_SECRET }}
         run: echo "Secret received: ${#TEST_SECRET} characters"
